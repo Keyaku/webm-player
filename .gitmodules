@@ -1,6 +1,6 @@
 [submodule "nestegg"]
 	path = nestegg
-	url = http://github.com/kinetiknz/nestegg.git
+	url = https://github.com/kinetiknz/nestegg
 [submodule "libvpx"]
 	path = libvpx
-	url = http://git.chromium.org/webm/libvpx.git
+	url = https://chromium.googlesource.com/webm/libvpx
