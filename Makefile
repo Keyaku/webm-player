@@ -68,6 +68,5 @@ $(EXEC): $(OBJ_PROJ)
 
 clean:
 	rm -rf $(OBJDIR)/* $(BINDIR)/*
-	$(shell for dep in $(DEPS); do $(MAKE) -C $dep clean; done)
 
 .PHONY: all install uninstall clean
