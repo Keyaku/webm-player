@@ -1,43 +1,78 @@
-UNAME=$(shell uname -s)
-ifeq "$(UNAME)" "Linux"
-INCLUDE=
-LIBS=-lasound
+BINDIR = bin
+OBJDIR = bld
+DEPDIR = deps
+SRCDIR = src
+
+INCLUDE = -I/usr/local/include
+
+CXFLAGS := -std=c++11 -c -pedantic -Wall -Wextra $(INCLUDE)
+LDFLAGS = -L/usr/local/lib/ -L/usr/lib \
+		-lSDL
+
+BUILD ?= release
+ifeq ($(BUILD), debug)
+	CXFLAGS += -O0 -g
+	LDFLAGS += -O0 -g
+else
+	CXFLAGS += -O3
+	LDFLAGS += -O3
 endif
 
-ifeq "$(UNAME)" "Darwin"
-#INCLUDE=-I/opt/local/include
-LIBS=-lSDLmain -framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework Cocoa
+ifeq ($(shell uname), Darwin)
+	XCODE = xcrun -sdk macosx
+	CXX = $(XCODE) clang++
+
+	LDFLAGS += -framework Carbon \
+	-framework CoreAudio         \
+	-framework AudioToolbox      \
+	-framework AudioUnit         \
+	-framework Cocoa
+else
+	CXX = g++
+
+	LDFLAGS += -lasound
 endif
 
-INCLUDE +=-I. -Inestegg/include -Inestegg/halloc -Ilibvpx/vpx -Ilibvpx/vpx_codec -Ilibvpx/vpx_ports
-LIBS += vpx-build/libvpx.a
+LD = $(CXX)
+EXECFILE = webm-player
 
-all: webm
+################################################################################
+#############       DO NOT CHANGE ANYTHING BELOW THIS PART        ##############
+################################################################################
+EXEC := $(BINDIR)/$(EXECFILE)
+DEPS := $(shell ls $(DEPDIR))
+DEPS := $(addprefix deps/,$(DEPS))
 
-vpx-build/vpx_config.h: libvpx/configure
-	mkdir -p vpx-build && cd vpx-build && ../libvpx/configure
+# Get Only the Internal Structure of SRCDIR Recursively
+STRUCTURE := $(shell find $(SRCDIR) -type d)
+# Get All Files inside the STRUCTURE Variable for the code
+CODE_PROJ := $(addsuffix /*,$(STRUCTURE))
+CODE_PROJ := $(wildcard $(CODE_PROJ))
 
-vpx-build/libvpx.a: vpx-build/vpx_config.h
-	cd vpx-build && make
+# Filter only specific files
+SRC_PROJ := $(filter %.cpp,$(CODE_PROJ))
+OBJ_PROJ += $(subst $(SRCDIR),$(OBJDIR),$(SRC_PROJ:%.cpp=%.o))
 
-nestegg/configure: nestegg/configure.ac
-	cd nestegg && autoreconf --install && ./configure && cd ..
+# Object compiling
+$(OBJDIR)/%.o: $(addprefix $(SRCDIR)/,%.cpp)
+	$(shell mkdir -p $(dir $@))
+	$(CXX) $(CXFLAGS) -o $@ $<
 
-nestegg/src/nestegg.o: nestegg/configure nestegg/src/nestegg.c
-	make -C nestegg
+# General rules
+all: $(DEPS) $(EXEC)
 
-webm.o: webm.cpp vpx-build/libvpx.a nestegg/src/nestegg.o
-	g++ -g -c $(INCLUDE) -o webm.o webm.cpp
+$(DEPS):
+	$(MAKE) -C $@ all
 
-webm: webm.o nestegg/halloc/src/halloc.o nestegg/src/nestegg.o vpx-build/libvpx.a
-	g++ -g -o webm webm.o nestegg/halloc/src/halloc.o nestegg/src/nestegg.o -lvorbis -logg -lSDL $(LIBS)
+$(EXEC): $(OBJ_PROJ)
+	$(LD) $(LDFLAGS) -o $@ $^
 
-clean: 
-	rm -f *.o webm && rm -r vpx-build && make -C nestegg clean
+################################################################################
+#############       DO NOT CHANGE ANYTHING ABOVE THIS PART        ##############
+################################################################################
 
-nestegg/halloc/src/halloc.o: nestegg/halloc/src/halloc.c
-	gcc -g -c $(INCLUDE) -o halloc.o nestegg/halloc/src/halloc.c
+clean:
+	rm -rf $(OBJDIR)/* $(BINDIR)/*
+	$(shell for dep in $(DEPS); do $(MAKE) -C $dep clean; done)
 
-nestegg.o: nestegg/src/nestegg.c
-	gcc -g -c $(INCLUDE) -o nestegg.o nestegg/src/nestegg.c
-
+.PHONY: all install uninstall clean
