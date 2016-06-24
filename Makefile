@@ -40,8 +40,6 @@ EXECFILE = webm-player
 #############       DO NOT CHANGE ANYTHING BELOW THIS PART        ##############
 ################################################################################
 EXEC := $(BINDIR)/$(EXECFILE)
-DEPS := $(shell ls $(DEPDIR))
-DEPS := $(addprefix deps/,$(DEPS))
 
 # Get Only the Internal Structure of SRCDIR Recursively
 STRUCTURE := $(shell find $(SRCDIR) -type d)
@@ -59,10 +57,7 @@ $(OBJDIR)/%.o: $(addprefix $(SRCDIR)/,%.cpp)
 	$(CXX) $(CXFLAGS) -o $@ $<
 
 # General rules
-all: $(DEPS) $(EXEC)
-
-$(DEPS):
-	$(MAKE) -C $@ all
+all: $(EXEC)
 
 $(EXEC): $(OBJ_PROJ)
 	$(LD) $(LDFLAGS) -o $@ $^

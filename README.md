@@ -18,4 +18,7 @@ You will need the following third party libraries to build:
 	cd webm-player
 	git submodule init
 	git submodule update
-	make
+
+Then, you'll have to configure and install the dependencies under `deps/`.
+
+After that, `make` will do the rest for you.
