@@ -7,7 +7,9 @@ INCLUDE = -I/usr/local/include
 
 CXFLAGS := -std=c++11 -c -pedantic -Wall -Wextra $(INCLUDE)
 LDFLAGS = -L/usr/local/lib/ -L/usr/lib \
-		-lSDL
+		-lSDL2    \
+		-lvpx     \
+		-lnestegg
 
 BUILD ?= release
 ifeq ($(BUILD), debug)
@@ -22,15 +24,11 @@ ifeq ($(shell uname), Darwin)
 	XCODE = xcrun -sdk macosx
 	CXX = $(XCODE) clang++
 
-	LDFLAGS += -framework Carbon \
-	-framework CoreAudio         \
-	-framework AudioToolbox      \
-	-framework AudioUnit         \
-	-framework Cocoa
+	#LDFLAGS += -framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework Cocoa
 else
 	CXX = g++
 
-	LDFLAGS += -lasound
+	#LDFLAGS += -lasound
 endif
 
 LD = $(CXX)
